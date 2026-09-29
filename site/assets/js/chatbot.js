@@ -46,11 +46,11 @@
     },
     {
       keys: ["consulting", "essay", "essays", "college essay", "application", "common app"],
-      answer: "Yes! Beyond SAT prep we offer <strong>college admissions consulting</strong> and <strong>essay coaching</strong> — help with applications, essays, and choosing the right schools."
+      answer: "Yes! Beyond SAT prep we offer <strong>college admissions consulting</strong> and <strong>essay coaching</strong> — help with applications, essays, and choosing the right schools. Sessions are available <strong>in person and online</strong>."
     },
     {
       keys: ["mentor", "mentorship"],
-      answer: "Yes — we offer <strong>high school mentorship</strong>: ongoing guidance on academics, study habits, and planning for college."
+      answer: "Yes — we offer <strong>high school mentorship</strong>: ongoing guidance on academics, study habits, and planning for college. Sessions are available <strong>in person and online</strong>."
     },
     {
       keys: ["what is able", "about able", "who are you", "who runs", "ceecee", "dr chung"],
