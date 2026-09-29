@@ -4,7 +4,8 @@ services:
     runtime: python
     plan: starter
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 2
+    # Single worker: inquiries use SQLite, which is not safe with concurrent writers.
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 1
     healthCheckPath: /api/health
     envVars:
       - key: TEXT_NUMBER
