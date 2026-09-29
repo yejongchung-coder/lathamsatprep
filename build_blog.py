@@ -65,6 +65,7 @@ FOOTER = """<footer class="site-footer">
     </div>
     <div class="footer-bottom">
       <span>\u00a9 <span data-year>2026</span> ABLE Enrichment. All rights reserved.</span>
+      <span><a href="/privacy-policy">Privacy Policy</a> · <a href="/sms-terms">SMS Terms</a></span>
       <span>SAT\u00ae is a trademark of the College Board, which is not affiliated with ABLE Enrichment.</span>
     </div>
   </div>
