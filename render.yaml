@@ -9,8 +9,8 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: TEXT_NUMBER
-        value: +15183907346
+        value: +15187389750
       - key: TEXT_NUMBER_DISPLAY
-        value: (518) 390-7346
+        value: (518) 738-9750
       # Set these in the Render dashboard (never commit secrets):
       # INQUIRY_KEY -> shared secret for the SID inquiry-watch job
