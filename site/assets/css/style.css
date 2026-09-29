@@ -222,7 +222,7 @@ section.blue .diff-item h3 { color: var(--navy); }
   padding: 18px 26px; box-shadow: var(--shadow-soft);
   display: flex; align-items: center;
 }
-.logos img { height: 52px; width: auto; }
+.logos img { height: 76px; width: auto; }
 
 /* ---------- towns ---------- */
 .towns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px; }
