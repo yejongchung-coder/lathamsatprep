@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: lathamsatprep
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 2
+    healthCheckPath: /api/health
+    envVars:
+      - key: TEXT_NUMBER
+        value: +15183907346
+      - key: TEXT_NUMBER_DISPLAY
+        value: (518) 390-7346
+      # Set these in the Render dashboard (never commit secrets):
+      # INQUIRY_KEY -> shared secret for the SID inquiry-watch job
