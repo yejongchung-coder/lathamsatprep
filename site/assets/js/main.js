@@ -104,4 +104,14 @@
   document.querySelectorAll("[data-year]").forEach(function (el) {
     el.textContent = new Date().getFullYear();
   });
+
+  // Chat widget: load its CSS + JS on every page
+  var chatCss = document.createElement("link");
+  chatCss.rel = "stylesheet";
+  chatCss.href = "/assets/css/chatbot.css";
+  document.head.appendChild(chatCss);
+  var chatJs = document.createElement("script");
+  chatJs.src = "/assets/js/chatbot.js";
+  chatJs.defer = true;
+  document.head.appendChild(chatJs);
 })();
