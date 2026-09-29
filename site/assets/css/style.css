@@ -367,3 +367,8 @@ section.blue .diff-item h3 { color: var(--navy); }
 .faq-item h3 { font-size: 1.08rem; margin-bottom: 8px; }
 .faq-item p { margin: 0; }
 .faq-item a { color: var(--blue); font-weight: 700; }
+
+/* ---------- SMS consent checkbox ---------- */
+.f-field label.consent-check { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; font-size: 0.88rem; line-height: 1.45; cursor: pointer; color: var(--muted); }
+.f-field .consent-check input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; padding: 0; flex: none; border: 2px solid var(--line); border-radius: 6px; background: #fff; accent-color: var(--blue); cursor: pointer; }
+.f-field .consent-check a { text-decoration: underline; }
