@@ -74,13 +74,13 @@
     },
     {
       keys: ["hi", "hello", "hey"],
-      answer: "Hi there! 👋 Ask me about our summer SAT program, registration, class size, pricing, or anything else about ABLE."
+      answer: "Hi there! 👋 Ask me about our summer SAT program, college essays, college consulting, or anything else about ABLE."
     }
   ];
 
   var FALLBACK = "Hmm, I'm not sure about that one — but we'd love to help! Text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> (usually same-day reply) or send the inquiry form on this page.";
 
-  var QUICK = ["When is registration?", "How many students per class?", "How much does it cost?", "Where are you located?"];
+  var QUICK = ["When is registration?", "How many students per class?", "Do you help with college essays?", "Is consulting in person or online?"];
 
   function normalize(s) {
     return " " + s.toLowerCase().replace(/[^a-z0-9\s]/g, " ") + " ";
@@ -168,7 +168,7 @@
       panel.classList.toggle("open", opened);
       if (opened && !panel.dataset.greeted) {
         panel.dataset.greeted = "1";
-        addMsg("Hi! I'm the ABLE assistant. Ask me about our SAT program, registration, or anything else — or tap a question below.", "bot");
+        addMsg("Hi! I'm the ABLE assistant. Ask me about our SAT program, college essays, college consulting — or anything else. Or tap a question below.", "bot");
         addChips();
       }
       if (opened) setTimeout(function () { input.focus(); }, 250);
