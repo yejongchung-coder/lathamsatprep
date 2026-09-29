@@ -26,7 +26,7 @@
     },
     {
       keys: ["where", "location", "located", "address", "latham", "albany"],
-      answer: "We're based in <strong>Latham, NY</strong> and work with families across the Capital Region — Albany, Colonie, Clifton Park, Niskayuna, Troy, Schenectady, and beyond — in person and online."
+      answer: "Our classes meet at <strong>981 Loudon Rd, Cohoes, NY 12047</strong> — in a conference room. We serve families across the Capital Region — Albany, Colonie, Clifton Park, Niskayuna, Troy, Schenectady, and beyond — in person and online."
     },
     {
       keys: ["phone", "call", "text", "number", "contact", "reach", "talk to"],
