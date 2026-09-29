@@ -22,7 +22,7 @@
     },
     {
       keys: ["cost", "price", "pricing", "tuition", "how much", "fee", "fees", "charge"],
-      answer: "We don't list prices on the site — the fastest way to get tuition details is to text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> and we'll get back to you, usually the same day."
+      answer: "For pricing, our instructor will go over it with you directly. Just fill out the inquiry form or text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> to reach out!"
     },
     {
       keys: ["where", "location", "located", "address", "latham", "albany"],
