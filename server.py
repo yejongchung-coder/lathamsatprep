@@ -4,10 +4,10 @@ and receives incoming SMS (Twilio webhook) so SID can relay them to Yejong.
 
 Environment:
     TEXT_NUMBER
-        The public text-message number, E.164 (e.g. +15183907346).
+        The public text-message number, E.164 (e.g. +15187389750).
         Served to the site via /api/config; never hard-coded in HTML.
     TEXT_NUMBER_DISPLAY
-        Pretty display version (e.g. (518) 390-7346). Defaults to TEXT_NUMBER.
+        Pretty display version (e.g. (518) 738-9750). Defaults to TEXT_NUMBER.
     INQUIRY_KEY
         Shared secret guarding /api/inquiries/pending and /ack.
         The scheduled SID watch job uses this to pull new inquiries/texts.

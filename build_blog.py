@@ -56,7 +56,7 @@ FOOTER = """<footer class="site-footer">
       <div>
         <h4>Contact</h4>
         <ul>
-          <li><a href="tel:+15183907346">(518) 390-7346</a></li>
+          <li><a href="tel:+15187389750">(518) 738-9750</a></li>
         </ul>
       </div>
     </div>

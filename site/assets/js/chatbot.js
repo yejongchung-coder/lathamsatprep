@@ -2,9 +2,9 @@
 (function () {
   "use strict";
 
-  var PHONE_DISPLAY = "(518) 390-7346";
-  var PHONE_LINK = "tel:+15183907346";
-  var SMS_LINK = "sms:+15183907346";
+  var PHONE_DISPLAY = "(518) 738-9750";
+  var PHONE_LINK = "tel:+15187389750";
+  var SMS_LINK = "sms:+15187389750";
 
   // Each entry: keywords (any match scores) + answer (HTML allowed)
   var QA = [
