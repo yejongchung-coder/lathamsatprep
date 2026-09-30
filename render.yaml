@@ -8,6 +8,8 @@ services:
     startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 1
     healthCheckPath: /api/health
     envVars:
+      # NOTE: values set in the Render dashboard OVERRIDE these. After changing
+      # render.yaml, update the dashboard env vars too (or the site keeps the old number).
       - key: TEXT_NUMBER
         value: +15187389750
       - key: TEXT_NUMBER_DISPLAY

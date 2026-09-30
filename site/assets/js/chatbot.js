@@ -6,6 +6,21 @@
   var PHONE_LINK = "tel:+15187389750";
   var SMS_LINK = "sms:+15187389750";
 
+  // Pull the live number from the backend so the widget never quotes a stale
+  // number. Answers below are functions evaluated at reply time, so by the
+  // time a visitor chats, the fetch has completed.
+  function loadConfig() {
+    fetch("/api/config", { cache: "no-store" }).then(function (r) {
+      return r.json();
+    }).then(function (cfg) {
+      if (cfg.text_number_display) PHONE_DISPLAY = cfg.text_number_display;
+      if (cfg.text_number) {
+        PHONE_LINK = "tel:" + cfg.text_number;
+        SMS_LINK = "sms:" + cfg.text_number;
+      }
+    }).catch(function () { /* keep compiled-in fallback */ });
+  }
+
   // Each entry: keywords (any match scores) + answer (HTML allowed)
   var QA = [
     {
@@ -14,7 +29,7 @@
     },
     {
       keys: ["register", "registration", "sign up", "signup", "enroll", "how do i join", "how to join"],
-      answer: "Registration opens in <strong>January</strong> and spots are <strong>first come, first served</strong>. They fill up every year, so reach out early! Text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> or use the inquiry form below."
+      answer: function () { return "Registration opens in <strong>January</strong> and spots are <strong>first come, first served</strong>. They fill up every year, so reach out early! Text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> or use the inquiry form below."; }
     },
     {
       keys: ["how many", "slots", "spots", "seats", "class size", "students max", "maximum", "full"],
@@ -22,7 +37,7 @@
     },
     {
       keys: ["cost", "price", "pricing", "tuition", "how much", "fee", "fees", "charge"],
-      answer: "For pricing, our instructor will go over it with you directly. Just fill out the inquiry form or text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> to reach out!"
+      answer: function () { return "For pricing, our instructor will go over it with you directly. Just fill out the inquiry form or text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> to reach out!"; }
     },
     {
       keys: ["where", "location", "located", "address", "latham", "albany"],
@@ -30,7 +45,7 @@
     },
     {
       keys: ["phone", "call", "text", "number", "contact", "reach", "talk to"],
-      answer: "You can text or call us at <a href=\"" + PHONE_LINK + "\">" + PHONE_DISPLAY + "</a> — or send the quick inquiry form on this page."
+      answer: function () { return "You can text or call us at <a href=\"" + PHONE_LINK + "\">" + PHONE_DISPLAY + "</a> — or send the quick inquiry form on this page."; }
     },
     {
       keys: ["august"],
@@ -78,7 +93,7 @@
     }
   ];
 
-  var FALLBACK = "Hmm, I'm not sure about that one — but we'd love to help! Text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> (usually same-day reply) or send the inquiry form on this page.";
+  function FALLBACK() { return "Hmm, I'm not sure about that one — but we'd love to help! Text us at <a href=\"" + SMS_LINK + "\">" + PHONE_DISPLAY + "</a> (usually same-day reply) or send the inquiry form on this page."; }
 
   var QUICK = ["When is registration?", "How many students per class?", "Do you help with college essays?", "Is consulting in person or online?"];
 
@@ -96,7 +111,8 @@
       }
       if (score > bestScore) { bestScore = score; best = QA[i]; }
     }
-    return best ? best.answer : FALLBACK;
+    if (!best) return FALLBACK();
+    return (typeof best.answer === "function") ? best.answer() : best.answer;
   }
 
   function el(tag, cls, html) {
@@ -186,6 +202,8 @@
       }
     });
   }
+
+  loadConfig();
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

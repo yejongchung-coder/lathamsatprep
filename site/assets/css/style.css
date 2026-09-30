@@ -372,3 +372,22 @@ section.blue .diff-item h3 { color: var(--navy); }
 .f-field label.consent-check { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; font-size: 0.88rem; line-height: 1.45; cursor: pointer; color: var(--muted); }
 .f-field .consent-check input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; padding: 0; flex: none; border: 2px solid var(--line); border-radius: 6px; background: #fff; accent-color: var(--blue); cursor: pointer; }
 .f-field .consent-check a { text-decoration: underline; }
+
+/* ---------- Google reviews ---------- */
+.rating-summary { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 18px 0 8px; flex-wrap: wrap; }
+.rating-number { font-size: 3.2rem; font-weight: 900; color: var(--ink); line-height: 1; }
+.rating-meta { text-align: left; }
+.stars { color: #f59e0b; font-size: 1.35rem; letter-spacing: 3px; line-height: 1; }
+.rating-meta small { display: block; color: var(--muted); font-weight: 700; margin-top: 6px; font-size: 0.9rem; }
+.review-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 44px; text-align: left; }
+.review-card { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 28px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.review-card .stars { font-size: 1.05rem; margin-bottom: 14px; }
+.review-card blockquote { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--ink); flex: 1; }
+.review-card .who { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-weight: 800; font-size: 0.95rem; }
+.review-card .who span { display: block; font-weight: 600; color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+.reviews-more { margin-top: 36px; }
+@media (max-width: 960px) { .review-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .review-grid { grid-template-columns: 1fr; } }
+
+/* ---------- keyboard focus visibility ---------- */
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
