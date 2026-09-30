@@ -124,8 +124,9 @@ def post_page(p):
         '<meta property="og:image" content="%s">\n'
         '<meta name="twitter:card" content="summary_large_image">\n'
         '<meta name="twitter:title" content="%s | ABLE Enrichment Blog">\n'
-        '<meta name="twitter:image" content="%s">'
-        % (title, html.escape(og_image), title, html.escape(og_image))
+        '<meta name="twitter:image" content="%s">\n'
+        '<link rel="canonical" href="https://lathamsatprep.com/blog/%s">'
+        % (title, html.escape(og_image), title, html.escape(og_image), p["slug"])
     )
     schema = (
         '<script type="application/ld+json">\n'
