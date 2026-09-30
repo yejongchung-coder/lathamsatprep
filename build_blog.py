@@ -23,6 +23,7 @@ HEADER = """<header class="site-header">
       <a href="/mentorship">Mentorship</a>
       <a href="/why-able">Why ABLE</a>
       <a href="/blog" class="active">Blog</a>
+      <a href="/free-resources">Resources</a>
       <a href="/#contact" class="btn small">Get Started</a>
     </nav>
   </div>
@@ -89,7 +90,7 @@ def fmt_date(raw):
     return raw
 
 
-def excerpt(body_html, length=160):
+def excerpt(body_html, length=150):
     text = re.sub(r"<[^>]+>", " ", body_html or "")
     text = re.sub(r"\s+", " ", html.unescape(text)).strip()
     return text[:length].rstrip() + ("..." if len(text) > length else "")
@@ -108,18 +109,44 @@ def load_posts():
 
 def post_page(p):
     title = html.escape(p["title"])
-    date = html.escape(fmt_date(p.get("date", "")))
+    raw_date = p.get("date", "")
+    date = html.escape(fmt_date(raw_date))
     author = html.escape(p.get("author", "ABLE Enrichment"))
     cover = p.get("cover") or ""
     cover_tag = (
         '<img class="cover" src="%s" alt="%s">' % (html.escape(cover), title)
         if cover else ""
     )
+    og_image = ("https://lathamsatprep.com" + cover) if cover else "https://lathamsatprep.com/assets/img/og-cover.jpg"
+    og_tags = (
+        '<meta property="og:type" content="article">\n'
+        '<meta property="og:title" content="%s | ABLE Enrichment Blog">\n'
+        '<meta property="og:image" content="%s">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
+        '<meta name="twitter:title" content="%s | ABLE Enrichment Blog">\n'
+        '<meta name="twitter:image" content="%s">'
+        % (title, html.escape(og_image), title, html.escape(og_image))
+    )
+    schema = (
+        '<script type="application/ld+json">\n'
+        '{\n'
+        '  "@context": "https://schema.org",\n'
+        '  "@type": "BlogPosting",\n'
+        '  "headline": "%s",\n'
+        '  "datePublished": "%s",\n'
+        '  "author": {"@type": "Person", "name": "%s"},\n'
+        '  "publisher": {"@type": "EducationalOrganization", "name": "ABLE Enrichment", "url": "https://lathamsatprep.com/"}\n'
+        '}\n'
+        '</script>'
+        % (title, html.escape(raw_date), author)
+    )
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
 <title>%s | ABLE Enrichment Blog</title>
 <meta name="description" content="%s">
+%s
+%s
 %s
 </head>
 <body>
@@ -129,7 +156,7 @@ def post_page(p):
     <article class="article">
       <p><a href="/blog">&larr; All articles</a></p>
       <h1>%s</h1>
-      <p class="pdate">%s &middot; %s</p>
+      <p class="pdate">By %s &middot; <time datetime="%s">%s</time></p>
       %s
       %s
       <div class="cta-band" style="margin-top: 48px;">
@@ -144,7 +171,8 @@ def post_page(p):
 <script src="/assets/js/main.js"></script>
 </body>
 </html>
-""" % (title, html.escape(excerpt(p.get("body_html", ""))), HEAD, HEADER, title, author, date,
+""" % (title, html.escape(excerpt(p.get("body_html", ""))), og_tags, schema, HEAD, HEADER, title, author,
+       html.escape(raw_date), date,
        cover_tag, p.get("body_html", ""), FOOTER)
 
 
@@ -155,10 +183,11 @@ def build_index(posts):
         img = '<img src="%s" alt="%s" loading="lazy">' % (html.escape(cover), html.escape(p["title"])) if cover else ""
         cards.append(
             '<a class="post-card" href="/blog/%s">%s<div class="pbody">'
-            '<p class="pdate">%s</p><h3>%s</h3><p>%s</p>'
+            '<p class="pdate">%s &middot; %s</p><h3>%s</h3><p>%s</p>'
             '</div></a>'
             % (html.escape(p["slug"]), img,
                html.escape(fmt_date(p.get("date", ""))),
+               html.escape(p.get("author", "ABLE Enrichment")),
                html.escape(p["title"]),
                html.escape(excerpt(p.get("body_html", ""))))
         )
