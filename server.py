@@ -14,13 +14,17 @@ Environment:
     PORT
         Port to listen on (Render sets this).
 
-Inquiries and SMS are stored in SQLite at data/inquiries.db (gitignored).
+Inquiries, SMS, and pageviews are stored in SQLite at $DATA_DIR/inquiries.db
+(default <repo>/data/inquiries.db, gitignored). On Render DATA_DIR points at
+the persistent disk so numbers survive restarts and redeploys.
 A scheduled job polls /api/inquiries/pending, relays new items to Yejong
 in chat, then acknowledges them via /api/inquiries/ack.
+A monthly job pulls /api/stats for the website report.
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import sqlite3
@@ -28,11 +32,12 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, redirect, request, send_from_directory
+from flask import Flask, Response, jsonify, redirect, request, send_from_directory
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SITE_DIR = os.path.join(ROOT, "site")
-DATA_DIR = os.path.join(ROOT, "data")
+# Render persistent disk mount (set DATA_DIR env var); falls back to local data/.
+DATA_DIR = os.environ.get("DATA_DIR", "").strip() or os.path.join(ROOT, "data")
 DB_PATH = os.path.join(DATA_DIR, "inquiries.db")
 
 TEXT_NUMBER = os.environ.get("TEXT_NUMBER", "").strip()
@@ -80,6 +85,19 @@ def _db() -> sqlite3.Connection:
             acked INTEGER NOT NULL DEFAULT 0
         )"""
     )
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS pageviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT NOT NULL,              -- ISO UTC timestamp
+            path TEXT NOT NULL,
+            referrer TEXT DEFAULT '',
+            ip_hash TEXT NOT NULL,         -- sha256(ip + day): daily-rotating, not reversible
+            ua TEXT DEFAULT '',
+            mobile INTEGER NOT NULL DEFAULT 0,
+            is_bot INTEGER NOT NULL DEFAULT 0
+        )"""
+    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_pageviews_ts ON pageviews(ts)")
     return conn
 
 
@@ -130,6 +148,127 @@ def health():
 @app.get("/api/config")
 def config():
     return jsonify(text_number=TEXT_NUMBER, text_number_display=TEXT_NUMBER_DISPLAY)
+
+
+# --- lightweight privacy-friendly analytics (no cookies, no fingerprinting) ---
+BOT_UA_RE = re.compile(
+    r"bot|crawl|spider|slurp|mediapartners|baidu|yandex|sogou|exabot|facebot|ia_archiver|ahrefs|semrush|mj12bot|dotbot",
+    re.I,
+)
+MOBILE_UA_RE = re.compile(r"mobile|android|iphone|ipad|ipod", re.I)
+TRACK_SNIPPET = b'<script src="/assets/js/track.js" defer></script>'
+
+
+def _ip_hash(ip: str) -> str:
+    # Daily-rotating hash: enough to count unique visitors per day,
+    # not reversible to an address and not linkable across days.
+    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return hashlib.sha256(f"{ip}|{day}".encode()).hexdigest()[:32]
+
+
+@app.post("/api/track")
+def track():
+    data = request.get_json(force=True, silent=True) or {}
+    path = str(data.get("path", ""))[:200]
+    if not path.startswith("/"):
+        return ("", 204)
+    referrer = str(data.get("referrer", ""))[:300]
+    ua = request.headers.get("User-Agent", "")[:200]
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "").split(",")[0].strip()
+    conn = _db()
+    try:
+        conn.execute(
+            """INSERT INTO pageviews (ts, path, referrer, ip_hash, ua, mobile, is_bot)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                datetime.now(timezone.utc).isoformat(),
+                path,
+                referrer,
+                _ip_hash(ip),
+                ua,
+                1 if MOBILE_UA_RE.search(ua) else 0,
+                1 if BOT_UA_RE.search(ua) else 0,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return ("", 204)
+
+
+@app.get("/api/stats")
+def stats():
+    """Monthly aggregates for the website report. Guarded by INQUIRY_KEY."""
+    if not _key_ok():
+        return jsonify(ok=False, error="forbidden"), 403
+    month = (request.args.get("month") or "").strip()
+    if not re.fullmatch(r"\d{4}-\d{2}", month):
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    prefix = month + "%"
+    conn = _db()
+    try:
+        pv = conn.execute(
+            "SELECT COUNT(*) FROM pageviews WHERE is_bot = 0 AND ts LIKE ?", (prefix,)
+        ).fetchone()[0]
+        uniques = conn.execute(
+            "SELECT COUNT(DISTINCT ip_hash) FROM pageviews WHERE is_bot = 0 AND ts LIKE ?",
+            (prefix,),
+        ).fetchone()[0]
+        mobile = conn.execute(
+            "SELECT COUNT(*) FROM pageviews WHERE is_bot = 0 AND mobile = 1 AND ts LIKE ?",
+            (prefix,),
+        ).fetchone()[0]
+        top_pages = [
+            dict(r)
+            for r in conn.execute(
+                """SELECT path, COUNT(*) AS views
+                   FROM pageviews WHERE is_bot = 0 AND ts LIKE ?
+                   GROUP BY path ORDER BY views DESC LIMIT 10""",
+                (prefix,),
+            ).fetchall()
+        ]
+        top_refs = [
+            dict(r)
+            for r in conn.execute(
+                """SELECT referrer, COUNT(*) AS views
+                   FROM pageviews
+                   WHERE is_bot = 0 AND ts LIKE ? AND referrer != ''
+                     AND referrer NOT LIKE '%lathamsatprep.com%'
+                   GROUP BY referrer ORDER BY views DESC LIMIT 10""",
+                (prefix,),
+            ).fetchall()
+        ]
+        inquiries = conn.execute(
+            "SELECT COUNT(*) FROM inquiries WHERE created_at LIKE ?", (prefix,)
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    return jsonify(
+        ok=True,
+        month=month,
+        pageviews=pv,
+        unique_visitors=uniques,
+        mobile_share=round(mobile / pv, 3) if pv else 0,
+        top_pages=top_pages,
+        top_referrers=top_refs,
+        inquiries=inquiries,
+        conversion_pct=round(inquiries / uniques * 100, 2) if uniques else 0,
+    )
+
+
+@app.after_request
+def _inject_tracking(resp):
+    # (Kept as a no-op guard: HTML injection happens in _serve_html below,
+    # because send_from_directory responses stream the file directly.)
+    return resp
+
+
+def _serve_html(full_path: str):
+    with open(full_path, "rb") as f:
+        data = f.read()
+    if TRACK_SNIPPET not in data and b"</body>" in data:
+        data = data.replace(b"</body>", TRACK_SNIPPET + b"</body>", 1)
+    return Response(data, mimetype="text/html")
 
 
 @app.post("/api/inquiry")
@@ -255,7 +394,7 @@ REDIRECTS = {
 
 @app.get("/")
 def root():
-    return send_from_directory(SITE_DIR, "index.html")
+    return _serve_html(os.path.join(SITE_DIR, "index.html"))
 
 
 @app.get("/<path:path>")
@@ -266,14 +405,16 @@ def static_or_page(path: str):
     if os.path.isdir(full):
         index = os.path.join(full, "index.html")
         if os.path.isfile(index):
-            return send_from_directory(full, "index.html")
+            return _serve_html(index)
     if os.path.isfile(full):
+        if full.endswith(".html"):
+            return _serve_html(full)
         return send_from_directory(SITE_DIR, path)
     # Pretty URLs: /sat-prep -> /sat-prep.html
     candidate = full + ".html"
     if os.path.isfile(candidate):
-        return send_from_directory(SITE_DIR, path + ".html")
-    return send_from_directory(SITE_DIR, "404.html"), 404
+        return _serve_html(candidate)
+    return _serve_html(os.path.join(SITE_DIR, "404.html")), 404
 
 
 if __name__ == "__main__":
