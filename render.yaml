@@ -7,6 +7,11 @@ services:
     # Single worker: inquiries use SQLite, which is not safe with concurrent writers.
     startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 1
     healthCheckPath: /api/health
+    # Persistent disk: pageview + inquiry data survives restarts and redeploys.
+    disk:
+      name: able-data
+      mountPath: /var/data/able
+      sizeGB: 1
     envVars:
       # NOTE: values set in the Render dashboard OVERRIDE these. After changing
       # render.yaml, update the dashboard env vars too (or the site keeps the old number).
@@ -14,5 +19,7 @@ services:
         value: +15187389750
       - key: TEXT_NUMBER_DISPLAY
         value: (518) 738-9750
+      - key: DATA_DIR
+        value: /var/data/able
       # Set these in the Render dashboard (never commit secrets):
       # INQUIRY_KEY -> shared secret for the SID inquiry-watch job
