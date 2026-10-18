@@ -23,3 +23,6 @@ services:
         value: /var/data/able
       # Set these in the Render dashboard (never commit secrets):
       # INQUIRY_KEY -> shared secret for the SID inquiry-watch job
+      # TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN -> Twilio REST API credentials
+      #   for the new-form push SMS
+      # NOTIFY_PHONE -> Yejong's phone in E.164 (receives the push SMS)

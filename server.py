@@ -11,6 +11,12 @@ Environment:
     INQUIRY_KEY
         Shared secret guarding /api/inquiries/pending and /ack.
         The scheduled SID watch job uses this to pull new inquiries/texts.
+    TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN
+        Twilio REST API credentials (Render dashboard secrets). Used to
+        text NOTIFY_PHONE the moment a contact-form submission lands.
+    NOTIFY_PHONE
+        Yejong's phone in E.164 format (Render dashboard secret).
+        Receives the new-form push SMS from TEXT_NUMBER.
     PORT
         Port to listen on (Render sets this).
 
@@ -43,6 +49,12 @@ DB_PATH = os.path.join(DATA_DIR, "inquiries.db")
 TEXT_NUMBER = os.environ.get("TEXT_NUMBER", "").strip()
 TEXT_NUMBER_DISPLAY = os.environ.get("TEXT_NUMBER_DISPLAY", "").strip() or TEXT_NUMBER
 INQUIRY_KEY = os.environ.get("INQUIRY_KEY", "").strip()
+# Push notifications: when set, new contact-form submissions are texted to
+# NOTIFY_PHONE via the Twilio REST API (same number families already get
+# their inbound SMS forwarded to). Values live in the Render dashboard.
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
+NOTIFY_PHONE = os.environ.get("NOTIFY_PHONE", "").strip()
 
 app = Flask(__name__, static_folder=None)
 
@@ -128,6 +140,34 @@ def _save(kind: str, **fields) -> int:
         return cur.lastrowid
     finally:
         conn.close()
+
+
+def _send_sms(to: str, body: str) -> bool:
+    """Send an SMS via the Twilio REST API. Never raises; returns success."""
+    if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TEXT_NUMBER and to):
+        return False
+    try:
+        import base64
+        import urllib.parse
+        import urllib.request
+
+        url = (
+            "https://api.twilio.com/2010-04-01/Accounts/"
+            f"{TWILIO_ACCOUNT_SID}/Messages.json"
+        )
+        data = urllib.parse.urlencode(
+            {"To": to, "From": TEXT_NUMBER, "Body": body}
+        ).encode()
+        creds = base64.b64encode(
+            f"{TWILIO_ACCOUNT_SID}:{TWILIO_AUTH_TOKEN}".encode()
+        ).decode()
+        req = urllib.request.Request(
+            url, data=data, headers={"Authorization": f"Basic {creds}"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return 200 <= resp.status < 300
+    except Exception:
+        return False
 
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -323,6 +363,14 @@ def inquiry():
         parent_email=parent_email,
         interest=INTERESTS[interest],
         source=SOURCES[source],
+    )
+    # Push notification: text Yejong the moment a form lands, so the
+    # 15-minute polling watch is no longer needed for relay. The form
+    # itself is already saved; a failed SMS never blocks the response.
+    _send_sms(
+        NOTIFY_PHONE,
+        f"ABLE new form — {INTERESTS[interest]}: {student_name}, "
+        f"grade {grade}, {school}. Parent: {parent_name}, {parent_phone}.",
     )
     return jsonify(ok=True)
 
